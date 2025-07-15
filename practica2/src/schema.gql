@@ -1,0 +1,89 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Recurso {
+  id: Float!
+  nombre: String!
+  tipo: String!
+  post: Post!
+}
+
+type Post {
+  id: Float!
+  titulo: String!
+  contenido: String!
+  fechaCreacion: DateTime!
+  tipoRecursoId: Float!
+  recursos: [Recurso!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type TipoRecurso {
+  id: Float!
+  nombre: String!
+  descripcion: String!
+}
+
+type Query {
+  post(id: Int!): Post!
+  recursos: [Recurso!]!
+  recurso(id: Float!): Recurso!
+  tiposRecurso: [TipoRecurso!]!
+  tipoRecurso(id: Float!): TipoRecurso!
+}
+
+type Mutation {
+  createPost(createPostInput: CreatePostInput!): Post!
+  updatePost(updatePostInput: UpdatePostInput!): Post!
+  removePost(id: Int!): Post!
+  createRecurso(createRecursoInput: CreateRecursoInput!): Recurso!
+  updateRecurso(updateRecursoInput: UpdateRecursoInput!): Recurso!
+  removeRecurso(id: Float!): Boolean!
+  createTipoRecurso(createTipoRecursoInput: CreateTipoRecursoInput!): TipoRecurso!
+  updateTipoRecurso(updateTipoRecursoInput: UpdateTipoRecursoInput!): TipoRecurso!
+  removeTipoRecurso(id: Float!): Boolean!
+}
+
+input CreatePostInput {
+  titulo: String!
+  contenido: String!
+  fechaCreacion: String!
+  tipoRecursoId: Float!
+}
+
+input UpdatePostInput {
+  id: Int!
+  titulo: String!
+  contenido: String!
+  fechaCreacion: DateTime!
+  tipoRecursoId: Float!
+}
+
+input CreateRecursoInput {
+  nombre: String!
+  url: String!
+  postId: Float!
+}
+
+input UpdateRecursoInput {
+  id: Int!
+  nombre: String!
+  url: String!
+  postId: Float!
+}
+
+input CreateTipoRecursoInput {
+  nombre: String!
+  descripcion: String!
+}
+
+input UpdateTipoRecursoInput {
+  id: Int!
+  nombre: String!
+  descripcion: String!
+}

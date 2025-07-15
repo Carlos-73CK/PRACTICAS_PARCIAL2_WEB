@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #status { font-weight: bold; }
+    .connected { color: green; }
+    .disconnected { color: red; }
+    textarea { width: 400px; height: 100px; margin-top: 10px; display: block; }
+    input[type="text"] { width: 400px; margin-bottom: 5px; }
+    button { margin-top: 5px; margin-right: 10px; padding: 8px 15px; cursor: pointer; }
+    #messages { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-top: 20px; background-color: #f9f9f9; }
+    .message-item { margin-bottom: 5px; word-wrap: break-word; }
+    .error-message { color: red; }
+  </style>
+</head>
+<body>
+  <h1>WebSocket Test Client (Browser)</h1>
+  <p>Status: <span id="status" class="disconnected">Disconnected</span></p>
+  <button onclick="connect()">Connect</button>
+  <button onclick="disconnect()">Disconnect</button>
+  <hr>
+  <h2>Send Message</h2>
+  <input type="text" id="eventInput" placeholder="Event Name (e.g., createPost)">
+  <textarea id="payloadInput" placeholder="JSON Payload (e.g., {&quot;titulo&quot;:&quot;Test&quot;, &quot;contenido&quot;:&quot;xyz&quot;, &quot;publicado&quot;:true})"></textarea>
+  <button onclick="sendMessage()">Send Message</button>
+
+  <hr>
+  <h2>Message Log</h2>
+  <div id="messages"></div>
+
+  <script>
+    let socket;
+
+    function connect() {
+      const statusSpan = document.getElementById('status');
+      try {
+        // Asegúrate de que la versión de Socket.IO aquí coincida con la que tienes en package.json (4.8.1)
+        // Usa 'http://' porque socket.io maneja el upgrade a ws://
+        socket = io('http://localhost:3000', { transports: ['websocket'] }); // Añadir transports puede ayudar a forzar WebSocket
+
+        socket.on('connect', () => {
+          statusSpan.textContent = 'Connected';
+          statusSpan.className = 'connected';
+          console.log('Connected to server!');
+          addMessage('--- Connected to server! ---');
+          // Escucha el evento 'connected' que el gateway de Post emite al conectar
+          socket.on('connected', (data) => {
+            addMessage('Server Says (on connect): ' + JSON.stringify(data));
+          });
+        });
+
+        socket.on('disconnect', (reason) => {
+          statusSpan.textContent = 'Disconnected';
+          statusSpan.className = 'disconnected';
+          console.log('Disconnected from server! Reason:', reason);
+          addMessage(`--- Disconnected from server! Reason: ${reason} ---`);
+        });
+
+        socket.on('connect_error', (error) => {
+          statusSpan.textContent = 'Connection Error';
+          statusSpan.className = 'disconnected';
+          console.error('Connection failed:', error);
+          addMessage('Connection Error: ' + error.message, true);
+        });
+
+        // Escuchar todos los eventos que tu servidor puede enviar
+        socket.onAny((eventName, data) => {
+          addMessage(`Received Event: ${eventName}, Data: ${JSON.stringify(data)}`);
+        });
+
+      } catch (error) {
+        statusSpan.textContent = 'Connection Error';
+        statusSpan.className = 'disconnected';
+        console.error('Connection failed (try-catch):', error);
+        addMessage('Connection Error (try-catch): ' + error.message, true);
+      }
+    }
+
+    function disconnect() {
+      if (socket) {
+        socket.disconnect();
+      }
+    }
+
+    function sendMessage() {
+      if (socket && socket.connected) {
+        const eventName = document.getElementById('eventInput').value;
+        const payloadText = document.getElementById('payloadInput').value;
+        try {
+          const payload = JSON.parse(payloadText);
+          // Emitir el evento con el payload
+          socket.emit(eventName, payload);
+          addMessage(`Sent Event: ${eventName}, Payload: ${payloadText}`);
+        } catch (e) {
+          addMessage('Error parsing payload: ' + e.message, true);
+        }
+      } else {
+        addMessage('Not connected to server.', true);
+      }
+    }
+
+    function addMessage(message, isError = false) {
+      const messagesDiv = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.className = 'message-item';
+      if (isError) {
+        p.className += ' error-message';
+      }
+      p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+    }
+
+    // Optional: Auto-connect on page load
+    // window.onload = connect;
+  </script>
+</body>
+</html>
